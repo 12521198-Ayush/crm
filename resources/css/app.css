@@ -1,0 +1,139 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ──────────────────────────────────────────────────────────────────
+   Central design tokens (CSS custom properties)
+   Components reference these — no hardcoded style values elsewhere.
+   White-label ready: override --brand-* per tenant later.
+   ────────────────────────────────────────────────────────────────── */
+:root {
+  --brand-500: #3a5dff;
+  --brand-600: #243df5;
+  --brand-700: #1c2fd1;
+
+  /* radius scale */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.25rem;
+
+  /* elevation scale */
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -12px rgba(15, 23, 42, 0.12);
+  --shadow-card-hover: 0 6px 16px -4px rgba(15, 23, 42, 0.10), 0 14px 40px -12px rgba(36, 61, 245, 0.18);
+
+  /* motion */
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 150ms;
+  --dur-base: 250ms;
+}
+
+@layer base {
+  html { -webkit-font-smoothing: antialiased; }
+  body {
+    @apply text-slate-700;
+    background-color: theme('colors.surface.100');
+    background-image: theme('backgroundImage.app-radial');
+    background-attachment: fixed;
+  }
+  ::selection { background: rgba(58, 93, 255, 0.18); }
+  /* Premium thin scrollbars */
+  * { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+  *::-webkit-scrollbar { width: 8px; height: 8px; }
+  *::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+  *::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+}
+
+@layer components {
+  /* ── Buttons ── gradient primary, soft secondary, micro-interactions ── */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold
+           transition-all duration-200 ease-spring focus:outline-none focus-visible:ring-2
+           focus-visible:ring-brand-500/40 focus-visible:ring-offset-2
+           disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none active:scale-[0.97];
+  }
+  .btn-primary  { @apply btn text-white bg-brand-gradient shadow-glow hover:shadow-card-hover hover:brightness-[1.05]; }
+  .btn-secondary{ @apply btn bg-white text-slate-700 shadow-soft hover:shadow-card hover:-translate-y-0.5; }
+  .btn-ghost    { @apply btn bg-transparent text-slate-600 hover:bg-slate-100; }
+  .btn-danger   { @apply btn text-white bg-danger-gradient shadow-soft hover:brightness-105; }
+  .btn-sm       { @apply px-3 py-1.5 text-xs rounded-lg; }
+  .btn-icon     { @apply p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition; }
+
+  /* ── Cards ── borderless, soft elevation, hover lift ── */
+  .card {
+    @apply bg-white rounded-2xl shadow-card transition-all duration-300 ease-spring;
+  }
+  .card-hover { @apply hover:-translate-y-1 hover:shadow-card-hover; }
+  .card-pad   { @apply p-5 sm:p-6; }
+
+  /* ── Glass surface ── */
+  .glass {
+    @apply rounded-2xl border border-white/40 bg-white/70 shadow-glass;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  /* ── Inputs / fields ── soft, ring focus, no hard border ── */
+  .input {
+    @apply w-full rounded-xl bg-surface-100 text-sm text-slate-800 px-3.5 py-2.5 shadow-inner-soft
+           placeholder-slate-400 border border-transparent transition
+           focus:bg-white focus:border-brand-500/30 focus:ring-4 focus:ring-brand-500/10 focus:outline-none;
+  }
+  .input:disabled { @apply bg-slate-100 text-slate-400 cursor-not-allowed; }
+  select.input   { @apply pr-9; }
+  textarea.input { @apply min-h-[96px]; }
+  .label { @apply block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5; }
+
+  /* Floating-label field */
+  .field { @apply relative; }
+  .field > .input { @apply pt-5 pb-1.5; }
+  .field > label {
+    @apply absolute left-3.5 top-3 text-sm text-slate-400 pointer-events-none origin-left
+           transition-all duration-200 ease-spring;
+  }
+  .field > .input:focus ~ label,
+  .field > .input:not(:placeholder-shown) ~ label {
+    @apply top-1.5 text-2xs font-semibold uppercase tracking-wide text-brand-600 scale-90;
+  }
+
+  /* ── Badges & pills ── */
+  .badge { @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold; }
+  .chip  { @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-surface-200 text-slate-600; }
+
+  /* ── Tables ── modern SaaS, sticky header, soft separators, row hover ── */
+  .table-base { @apply min-w-full text-sm; }
+  .table-base thead th {
+    @apply sticky top-0 z-10 bg-surface-100/95 backdrop-blur px-4 py-3 text-left text-2xs font-bold
+           uppercase tracking-wider text-slate-500;
+  }
+  .table-base tbody tr { @apply transition-colors duration-150 hover:bg-brand-50/50; }
+  .table-base tbody tr:not(:last-child) td { @apply border-b border-slate-100; }
+  .table-base td { @apply px-4 py-3 align-middle; }
+
+  /* ── Skeleton shimmer ── */
+  .skeleton {
+    @apply rounded-lg bg-surface-200 relative overflow-hidden;
+  }
+  .skeleton::after {
+    content: '';
+    @apply absolute inset-0 bg-shimmer animate-shimmer;
+    background-size: 936px 100%;
+  }
+
+  /* ── Modal backdrop ── */
+  .modal-backdrop {
+    @apply fixed inset-0 z-40 bg-slate-900/40;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .modal-panel { @apply card card-pad relative z-50 w-full; }
+
+  /* Section heading used across widgets */
+  .widget-title { @apply text-sm font-bold text-slate-800; }
+  .widget-sub   { @apply text-xs text-slate-400; }
+}
+
+/* Shared route/page transition (used by AppLayout) */
+.page-enter-active, .page-leave-active { transition: opacity var(--dur-base) ease, transform var(--dur-base) var(--ease-spring); }
+.page-enter-from { opacity: 0; transform: translateY(8px); }
+.page-leave-to   { opacity: 0; transform: translateY(-6px); }
