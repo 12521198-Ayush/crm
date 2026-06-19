@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\LeadCreated;
 use App\Models\Lead;
 use App\Models\LeadActivity;
 use App\Models\LeadSource;
@@ -37,6 +38,8 @@ class LeadIngestService
             'type'    => LeadActivity::TYPE_NOTE,
             'title'   => 'Lead ingested from ' . ($source?->name ?? $sourceSlug),
         ]);
+
+        LeadCreated::dispatch($lead, 'lead.created');
 
         return $lead;
     }

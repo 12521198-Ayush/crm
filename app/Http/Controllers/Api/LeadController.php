@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\LeadAssigned;
+use App\Events\LeadCreated;
+use App\Events\LeadStatusChanged;
 use App\Http\Controllers\Controller;
 use App\Models\CustomField;
 use App\Models\Lead;
@@ -102,6 +105,7 @@ class LeadController extends Controller
                     'type' => LeadActivity::TYPE_NOTE,
                     'title' => 'Lead imported',
                 ]);
+                LeadCreated::dispatch($lead, 'lead.imported');
                 $created++;
             } catch (\Throwable $e) {
                 $errors[] = ['row' => $created + count($errors) + 2, 'message' => $e->getMessage()];
@@ -124,6 +128,7 @@ class LeadController extends Controller
             'lead_id' => $lead->id, 'user_id' => $request->user()->id,
             'type' => LeadActivity::TYPE_NOTE, 'title' => 'Lead created',
         ]);
+        LeadCreated::dispatch($lead, 'lead.created');
         return response()->json($lead->load(['project', 'source', 'status', 'assignee']), 201);
     }
 
@@ -151,12 +156,14 @@ class LeadController extends Controller
     public function assign(Request $request, Lead $lead)
     {
         $data = $request->validate(['assigned_to' => 'required|exists:users,id']);
+        $wasAssigned = ! empty($lead->assigned_to);
         $lead->update($data);
         LeadActivity::create([
             'lead_id' => $lead->id, 'user_id' => $request->user()->id,
             'type' => LeadActivity::TYPE_ASSIGN, 'title' => 'Lead assigned',
             'meta' => ['assigned_to' => $data['assigned_to']],
         ]);
+        LeadAssigned::dispatch($lead->fresh(), (int) $data['assigned_to'], $wasAssigned ? 'lead.reassigned' : 'lead.assigned');
         return $lead->fresh(['assignee']);
     }
 
@@ -175,6 +182,7 @@ class LeadController extends Controller
             'body' => $data['remarks'] ?? null,
             'meta' => ['from' => $old, 'to' => $data['status_id']],
         ]);
+        LeadStatusChanged::dispatch($lead->fresh(), $old, (int) $data['status_id']);
         return $lead->fresh(['status']);
     }
 

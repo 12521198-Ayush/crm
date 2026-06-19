@@ -9,9 +9,16 @@ use App\Http\Controllers\Api\LeadStatusController;
 use App\Http\Controllers\Api\LeadSourceController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\Communication\AnalyticsController as WaAnalyticsController;
+use App\Http\Controllers\Api\Communication\AutomationRuleController;
+use App\Http\Controllers\Api\Communication\ConnectionController;
+use App\Http\Controllers\Api\Communication\MessageLogController;
+use App\Http\Controllers\Api\Communication\MetaController as WaMetaController;
+use App\Http\Controllers\Api\Communication\TemplateController as WaTemplateController;
 use App\Http\Controllers\Webhooks\GoogleAdsWebhookController;
 use App\Http\Controllers\Webhooks\IvrWebhookController;
 use App\Http\Controllers\Webhooks\MetaWebhookController;
+use App\Http\Controllers\Webhooks\WhatsupNinjaWebhookController;
 use Illuminate\Support\Facades\Route;
 
 // Public auth
@@ -23,6 +30,7 @@ Route::prefix('webhooks')->group(function () {
     Route::match(['get', 'post'], 'meta',  [MetaWebhookController::class, 'handle']);
     Route::post('google-ads',              [GoogleAdsWebhookController::class, 'handle']);
     Route::post('ivr',                     [IvrWebhookController::class, 'handle']);
+    Route::post('whatsupninja/{token}',    [WhatsupNinjaWebhookController::class, 'handle']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -84,5 +92,34 @@ Route::middleware('auth:sanctum')->group(function () {
     // Users - master & sub_master can manage their team
     Route::middleware('role:super_master,master,sub_master,agent')->group(function () {
         Route::apiResource('users', UserController::class);
+    });
+
+    // Communication Hub - WhatsupNinja integration & automation (master + sub_master)
+    Route::middleware('role:super_master,master,sub_master')->prefix('communication')->group(function () {
+        // Connection
+        Route::get('connection',          [ConnectionController::class, 'show']);
+        Route::post('connection',         [ConnectionController::class, 'connect']);
+        Route::post('connection/test',    [ConnectionController::class, 'test']);
+        Route::delete('connection',       [ConnectionController::class, 'destroy']);
+
+        // Templates
+        Route::get('templates',           [WaTemplateController::class, 'index']);
+        Route::post('templates/sync',     [WaTemplateController::class, 'syncNow']);
+
+        // Automation rules
+        Route::get('automation-rules',                 [AutomationRuleController::class, 'index']);
+        Route::post('automation-rules',                [AutomationRuleController::class, 'store']);
+        Route::get('automation-rules/{automationRule}', [AutomationRuleController::class, 'show']);
+        Route::put('automation-rules/{automationRule}', [AutomationRuleController::class, 'update']);
+        Route::delete('automation-rules/{automationRule}', [AutomationRuleController::class, 'destroy']);
+        Route::post('automation-rules/{automationRule}/toggle',   [AutomationRuleController::class, 'toggle']);
+        Route::post('automation-rules/{automationRule}/test-run', [AutomationRuleController::class, 'testRun']);
+        Route::post('automation-rules/preview',        [AutomationRuleController::class, 'preview']);
+
+        // Logs & analytics
+        Route::get('message-logs',        [MessageLogController::class, 'index']);
+        Route::get('message-logs/{whatsappMessageLog}', [MessageLogController::class, 'show']);
+        Route::get('analytics',           [WaAnalyticsController::class, 'index']);
+        Route::get('meta',                [WaMetaController::class, 'index']);
     });
 });

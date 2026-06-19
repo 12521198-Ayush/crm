@@ -46,6 +46,22 @@ class User extends Authenticatable
     public function isAgent(): bool     { return $this->role === self::ROLE_AGENT; }
     public function isSubAgent(): bool  { return $this->role === self::ROLE_SUB_AGENT; }
 
+    /**
+     * The tenant boundary: the root master that owns this user's account.
+     * Climbs the parent chain until a master (or a parentless user) is found.
+     * Used to scope WhatsupNinja connections, templates, rules and logs.
+     */
+    public function accountOwnerId(): int
+    {
+        $node = $this;
+        $guard = 0;
+        while ($node && ! $node->isMaster() && ! $node->isSuperMaster() && $node->parent_id && $guard < 20) {
+            $node = $node->parent()->first();
+            $guard++;
+        }
+        return $node?->id ?? $this->parent_id ?? $this->id;
+    }
+
     /** Team chain: returns ids of self + all descendants (for sub_master) */
     public function teamUserIds(): array
     {
